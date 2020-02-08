@@ -8,12 +8,14 @@ registerFont("../public/fonts/TradeGothicNextLTProBdCn.ttf", {
 
 const templatesDirectory = "../public/images";
 const fontName = "Trade Gothic Next LT Pro BdCn";
+const minFontSize = 40;
+const fontSize = 70;
+const quoteFontSize = 200;
 const inputText = process.argv[2] || "";
-const inputX = process.argv[3] || 300;
+const inputX = process.argv[3] || 325;
 const inputY = process.argv[4] || 0;
 const topBottomMargin = 100;
 const leftRightMargin = 200;
-const minFontSize = 40;
 
 fs.readdir(templatesDirectory, function(err, files) {
   if (err) {
@@ -28,7 +30,7 @@ fs.readdir(templatesDirectory, function(err, files) {
           ctx,
           {
             text: inputText,
-            fontSize: 100,
+            fontSize: fontSize,
             fontColor: index === 1 ? "#000000" : "#ffffff",
             x: Number(inputX),
             y: Number(inputY)
@@ -67,7 +69,6 @@ function fitText(ctx, textProperties, canvasSize) {
     const yPosition = getYPositionOfText(
       ctx,
       textProperties.text,
-      1,
       canvasSize.height
     );
     ctx.fillText(textProperties.text, textProperties.x, yPosition);
@@ -80,8 +81,10 @@ function fitText(ctx, textProperties, canvasSize) {
     lines = [];
   for (let n = 0; n < words.length; n++) {
     const isNewLineWord = words[n].indexOf("\\n") > -1;
-    const word = isNewLineWord ? words[n].substring(words[n].indexOf("\n")+3, words[n].length) : words[n];
-    const testLine = line + word + " ";    
+    const word = isNewLineWord
+      ? words[n].substring(words[n].indexOf("\n") + 3, words[n].length)
+      : words[n];
+    const testLine = line + word + " ";
     metrics = ctx.measureText(testLine);
     if ((isNewLineWord || metrics.width > textWidth) && n > 0) {
       lines.push(line);
@@ -93,51 +96,53 @@ function fitText(ctx, textProperties, canvasSize) {
   lines.push(line);
   if (lines.length > maxNumberOfLines) {
     textProperties.fontSize--;
-    if(textProperties.fontSize > minFontSize){
-        return fitText(ctx, textProperties, canvasSize);
+    if (textProperties.fontSize > minFontSize) {
+      return fitText(ctx, textProperties, canvasSize);
     }
   }
   let lineYPosition =
     textProperties.y + textHeight - textProperties.fontSize / 4;
   if (lines && lines.length > 0) {
-    lineYPosition = textProperties.y + getYPositionOfText(
-      ctx,
-      lines[0],
-      lines.length,
-      canvasSize.height
-    );
+    lineYPosition =
+      textProperties.y + getYPositionOfText(ctx, lines, canvasSize.height);
     textProperties.endYPosition = lineYPosition;
   }
   for (let i = lines.length - 1; i >= 0; i--) {
     ctx.fillText(lines[i], textProperties.x - 25, lineYPosition);
-    lineYPosition -= textProperties.fontSize * 1.1;
+    lineYPosition -= textProperties.fontSize;
   }
-  textProperties.yPosition = lineYPosition + (textProperties.fontSize * 1.1);
+  textProperties.yPosition = lineYPosition + textProperties.fontSize;
   textProperties.text = lines;
   addQuotes(ctx, textProperties, canvasSize);
 }
 
-function getYPositionOfText(ctx, text, numberOfLines, height) {
-  const contentHeight = getTextHeight(ctx, text, numberOfLines);
-  return contentHeight + (height - contentHeight) / 2;
+function getYPositionOfText(ctx, text, height) {
+  const contentHeight = getTextHeight(ctx, text);
+  return contentHeight + (height - contentHeight) * 0.5;
 }
 
-function getTextHeight(ctx, text, numberOfLines) {
-  const metrics = ctx.measureText(text);
-  return (
-    (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent) *
-    numberOfLines
-  );
+function getTextHeight(ctx, text) {
+  let metrics;
+  if (Array.isArray(text) && text.length > 0) {
+    metrics = ctx.measureText(text[0]);
+    return (
+      (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent) *
+      text.length
+    );
+  } else {
+    metrics = ctx.measureText(text);
+    return metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+  }
 }
 
 function addQuotes(ctx, textProperties, canvasSize) {
-  ctx.font = textProperties.fontSize * 2 + "px " + textProperties.fontName;
+  ctx.font = quoteFontSize + "px " + textProperties.fontName;
   const beginQuoteYPosition = Array.isArray(textProperties.text)
     ? textProperties.yPosition
     : textProperties.yPosition - 100;
   ctx.fillText("“", 200, beginQuoteYPosition);
   const endQuoteYPosition = Array.isArray(textProperties.text)
-    ? textProperties.endYPosition + 125
+    ? textProperties.endYPosition + 175
     : textProperties.yPosition + 150;
   ctx.fillText("”", canvasSize.width - 175, endQuoteYPosition);
 }
