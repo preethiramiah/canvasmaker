@@ -1,6 +1,6 @@
 # canvasmaker
 
-Node script that generates images in png and jpg format for eeach of the templates in the specified folder. 
+Node script that generates images in png and jpg format for each of the templates in the specified folder. 
 
 ## Execution command
 
